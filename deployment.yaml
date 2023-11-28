@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-deployment
+spec:
+  replicas: 4 
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      affinity: 
+        podAntiAffinity: 
+          requiredDuringSchedulingIgnoredDuringExecution: 
+          - labelSelector: 
+              matchExpressions: 
+              - key: app
+                operator: In
+                values: 
+                - webapp
+            topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: webapp
+        image: myapp # Образ нашего сервиса
+        resources:
+          requests:
+            memory: "128Mi" # Постоянное потребление памяти
+            cpu: "0.1" # Стандартное потребление CPU после инициализации
+          limits:
+            memory: "128Mi"
+            cpu: "1" # Увеличенный лимит CPU для первых запросов
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10 # Ожидаем 10 секунд для инициализации приложения
+          periodSeconds: 5
+      nodeSelector:
+        zone: "zone1" # Распределение подов по мультизональным нодам
